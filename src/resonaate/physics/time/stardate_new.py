@@ -4,6 +4,11 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 
+from .. import constants as CONST
+
+AD_OFFSET: float = 1721424.5
+"""Number of days from _noon_ of Janurary 1, 4713 BC to _midnight_ of January 1, 1 AD."""
+
 
 class DayFrac:
     """Number of elapsed days since _noon_ of January 1, 4713 BC."""
@@ -34,6 +39,38 @@ class DatetimeExt:
             dt: Specified Python `datetime` object.
         """
         self._dt = dt
+
+    @property
+    def year(self) -> int:
+        return self._dt.year
+
+    @property
+    def month(self) -> int:
+        return self._dt.month
+
+    @property
+    def day(self) -> int:
+        return self._dt.day
+
+    @property
+    def hour(self) -> int:
+        return self._dt.hour
+
+    @property
+    def minute(self) -> int:
+        return self._dt.minute
+
+    @property
+    def second(self) -> float:
+        return self._dt.second + self._dt.microsecond * 1e-6
+
+    def toDayFrac(self) -> DayFrac:
+        """Convert this :class:`.DatetimeExt` to a :class;`.DayFrac`."""
+        days = AD_OFFSET + self._dt.toordinal()
+        day_frac = self.second / CONST.DAYS2SEC
+        day_frac += self.minute / (CONST.DAYS2HOUR * CONST.HOUR2MINUTE)
+        day_frac += self.hour / CONST.DAYS2HOUR
+        return DayFrac(days, day_frac)
 
 
 class SecDelta:
