@@ -4,6 +4,8 @@ from __future__ import annotations
 from datetime import datetime
 from enum import Enum
 
+import numpy as np
+
 from .. import constants as CONST
 
 AD_OFFSET: float = 1721424.5
@@ -27,6 +29,23 @@ class DayFrac:
     def days(self) -> float:
         """Returns the sum of the specified two-part Julian day number."""
         return self._days_a + self._days_b
+
+    def toDatetime(self) -> DatetimeExt:
+        """Convert this :class:`.DayFrac` to a :class:`.DatetimeExt`."""
+        mod_ad_jd = self.days - AD_OFFSET
+        mod_ad_day = int(np.floor(mod_ad_jd))
+        dt = datetime.fromordinal(mod_ad_day)
+        day_frac = mod_ad_jd - mod_ad_day
+
+        hour_remainder = day_frac * CONST.DAYS2HOUR
+        hour = int(np.floor(hour_remainder))
+        minute_remainder = (hour_remainder - hour) * CONST.HOUR2MINUTE
+        minute = int(np.floor(minute_remainder))
+        second_remainder = (minute_remainder - minute) * CONST.MINUTE2SEC
+        second = int(np.floor(second_remainder))
+        micro = int(np.round((second_remainder - second) * 1e6))
+        dt = dt.replace(hour=hour, minute=minute, second=second, microsecond=micro)
+        return DatetimeExt(dt)
 
 
 class DatetimeExt:
@@ -65,7 +84,7 @@ class DatetimeExt:
         return self._dt.second + self._dt.microsecond * 1e-6
 
     def toDayFrac(self) -> DayFrac:
-        """Convert this :class:`.DatetimeExt` to a :class;`.DayFrac`."""
+        """Convert this :class:`.DatetimeExt` to a :class:`.DayFrac`."""
         days = AD_OFFSET + self._dt.toordinal()
         day_frac = self.second / CONST.DAYS2SEC
         day_frac += self.minute / (CONST.DAYS2HOUR * CONST.HOUR2MINUTE)
