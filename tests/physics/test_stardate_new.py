@@ -3,11 +3,9 @@
 from datetime import datetime
 
 # Third Party Imports
-import numpy as np
 import pytest
 
 # RESONAATE Imports
-from resonaate.physics import constants as CONST
 from resonaate.physics.time.stardate_new import DatetimeExt, DayFrac
 
 test_values = [
@@ -23,12 +21,12 @@ test_values = [
 def test_datetimeToDayFrac(test_dt: datetime, test_jd: float):
     """Verify that :meth:`.DatetimeExt.toDayFrac()` results in the expected value."""
     jd_calc = DatetimeExt.combine(test_dt.date(), test_dt.time()).toDayFrac()
-    assert abs(jd_calc - test_jd) < np.spacing(jd_calc)
+    assert jd_calc == test_jd
 
 @pytest.mark.parametrize(("test_dt", "test_jd"), test_values)
 def test_dayFracToDatetime(test_dt: datetime, test_jd: float):
     """Verify that :meth:`.DayFrac.toDatetime()` results in the expected value."""
-    tol_s = np.spacing(test_jd) * CONST.DAYS2SEC  # tolerance in seconds
-    dt_calc = DayFrac(test_jd).toDatetime()
+    jd_calc = DayFrac(test_jd)
+    dt_calc = jd_calc.toDatetime()
 
-    assert abs((dt_calc - test_dt).total_seconds()) < tol_s
+    assert abs((dt_calc - test_dt).total_seconds()) < jd_calc.sec_tol

@@ -18,6 +18,11 @@ AD_OFFSET: float = 1721424.5
 class DayFrac(float):
     """Number of elapsed days since _noon_ of January 1, 4713 BC."""
 
+    @property
+    def sec_tol(self) -> float:
+        """Represent floating point tolerance as seconds."""
+        return np.spacing(self) * CONST.DAYS2SEC
+
     def toDatetime(self) -> DatetimeExt:
         """Convert this :class:`.DayFrac` to a :class:`.DatetimeExt`."""
         mod_ad_jd = self - AD_OFFSET
@@ -30,8 +35,13 @@ class DayFrac(float):
         minute_remainder = (hour_remainder - hour) * CONST.HOUR2MINUTE
         minute = int(np.floor(minute_remainder))
         second_remainder = (minute_remainder - minute) * CONST.MINUTE2SEC
+
         second = int(np.floor(second_remainder))
-        micro = int(np.round((second_remainder - second) * 1e6))
+        micro = 0
+        if np.ceil(second_remainder) - second_remainder <= self.sec_tol:
+            second = int(np.ceil(second_remainder))
+        elif second_remainder - second > self.sec_tol:
+            micro = int(np.round((second_remainder - second) * 1e6))
         return DatetimeExt(_date.year, _date.month, _date.day, hour, minute, second, micro)
 
 
