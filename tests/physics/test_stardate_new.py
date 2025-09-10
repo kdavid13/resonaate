@@ -20,13 +20,13 @@ test_values = [
 @pytest.mark.parametrize(("test_dt", "test_jd"), test_values)
 def test_datetimeToDayFrac(test_dt: datetime, test_jd: float):
     """Verify that :meth:`.DatetimeExt.toDayFrac()` results in the expected value."""
-    jd_calc = DatetimeExt.combine(test_dt.date(), test_dt.time()).toDayFrac()
+    jd_calc = DatetimeExt.combine(test_dt.date(), test_dt.time()).asDayFrac()
     assert jd_calc == test_jd
 
 @pytest.mark.parametrize(("test_dt", "test_jd"), test_values)
 def test_dayFracToDatetime(test_dt: datetime, test_jd: float):
     """Verify that :meth:`.DayFrac.toDatetime()` results in the expected value."""
     jd_calc = DayFrac(test_jd)
-    dt_calc = jd_calc.toDatetime()
+    dt_calc = jd_calc.asDatetime()
 
     assert abs((dt_calc - test_dt).total_seconds()) < jd_calc.sec_tol

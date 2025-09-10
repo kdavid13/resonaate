@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 # Standard Library Imports
+from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
 
@@ -15,7 +16,21 @@ AD_OFFSET: float = 1721424.5
 """Number of days from _noon_ of Janurary 1, 4713 BC to _midnight_ of January 1, 1 AD."""
 
 
-class DayFrac(float):
+class TimeValue(ABC):
+    """Abstract base class representing a quantity of time measured from a particular epoch."""
+
+    @abstractmethod
+    def asDayFrac(self) -> DayFrac:
+        """Return this :class:`.TimeValue` represented as a :class:`.DayFrac` object."""
+        raise NotImplementedError
+
+    @abstractmethod
+    def asDatetime(self) -> DatetimeExt:
+        """Return this :class:`.TimeValue` represented as a :class:`.DatetimeExt` object."""
+        raise NotImplementedError
+
+
+class DayFrac(float, TimeValue):
     """Number of elapsed days since _noon_ of January 1, 4713 BC."""
 
     @property
@@ -23,8 +38,12 @@ class DayFrac(float):
         """Represent floating point tolerance as seconds."""
         return np.spacing(self) * CONST.DAYS2SEC
 
-    def toDatetime(self) -> DatetimeExt:
-        """Convert this :class:`.DayFrac` to a :class:`.DatetimeExt`."""
+    def asDayFrac(self) -> DayFrac:
+        """Return this :class:`.DayFrac` object."""
+        return self
+
+    def asDatetime(self) -> DatetimeExt:
+        """Return this :class:`.DayFrac` represented as a :class:`.DatetimeExt` object."""
         mod_ad_jd = self - AD_OFFSET
         mod_ad_day = int(np.floor(mod_ad_jd))
         _date = datetime.fromordinal(mod_ad_day)
@@ -45,7 +64,7 @@ class DayFrac(float):
         return DatetimeExt(_date.year, _date.month, _date.day, hour, minute, second, micro)
 
 
-class DatetimeExt(datetime):
+class DatetimeExt(datetime, TimeValue):
     """Extended functionality encapsulated with a Python `datetime`."""
 
     @property
@@ -53,13 +72,17 @@ class DatetimeExt(datetime):
         """Converts internal :attr:`.microsecond` value to floating point second fraction."""
         return self.microsecond * 1e-6
 
-    def toDayFrac(self) -> DayFrac:
-        """Convert this :class:`.DatetimeExt` to a :class:`.DayFrac`."""
+    def asDayFrac(self) -> DayFrac:
+        """Return this :class:`.DatetimeExt` represented as a :class:`.DayFrac` object."""
         days = AD_OFFSET + self.toordinal()
         day_frac = (self.second + self.sec_frac) / CONST.DAYS2SEC
         day_frac += self.minute / (CONST.DAYS2HOUR * CONST.HOUR2MINUTE)
         day_frac += self.hour / CONST.DAYS2HOUR
         return DayFrac(days + day_frac)
+
+    def asDatetime(self):
+        """Return this :class:`.DatetimeExt` object."""
+        return self
 
 
 class SecDelta:
@@ -99,7 +122,7 @@ class TimeScale(Enum):
 class Stardate:
     """Abstracts an instant in time."""
 
-    def __init__(self, time_val: DayFrac | SecDelta | datetime, scale: TimeScale):
+    def __init__(self, time_val: TimeValue, scale: TimeScale):
         """Instantiate a :class:`.Stardate`.
 
         Args:
@@ -107,6 +130,4 @@ class Stardate:
             scale: The scale of the `time_val`. Not all seconds are equal!
         """
         self._time_val = time_val
-        if isinstance(self._time_val, datetime):
-            self._time_val = DatetimeExt(self._time_val)
         self._scale = scale
