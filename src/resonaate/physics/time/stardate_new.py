@@ -19,6 +19,21 @@ AD_OFFSET: float = 1721424.5
 class TimeValue(ABC):
     """Abstract base class representing a quantity of time measured from a particular epoch."""
 
+    DEFAULT_EPOCH: float = 0.0
+    """The default instant in time that this :class:`.TimeValue` is measured from."""
+
+    def __init__(self, *args, **kwargs):
+        self._epoch = kwargs.pop("epoch", self.DEFAULT_EPOCH)
+        super().__init__()
+
+    @property
+    def epoch(self) -> float:
+        """Instant in time this :class:`.TimeValue` is measured from.
+
+        Represented as the number of days (24 UT hour periods) since _noon_ of Janurary 1, 4713 BC.
+        """
+        return self._epoch
+
     @abstractmethod
     def asDayFrac(self) -> DayFrac:
         """Return this :class:`.TimeValue` represented as a :class:`.DayFrac` object."""

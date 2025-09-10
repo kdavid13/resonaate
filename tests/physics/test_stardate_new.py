@@ -30,3 +30,10 @@ def test_dayFracToDatetime(test_dt: datetime, test_jd: float):
     dt_calc = jd_calc.asDatetime()
 
     assert abs((dt_calc - test_dt).total_seconds()) < jd_calc.sec_tol
+
+def test_epoch():
+    dt = DatetimeExt(1970, 1, 1, 12)
+    assert dt.epoch == 0.0
+
+    dt = DatetimeExt(1970, 1, 1, 12, epoch=123.456)
+    assert dt.epoch == 123.456
