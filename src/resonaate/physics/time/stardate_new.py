@@ -3,7 +3,7 @@ from __future__ import annotations
 
 # Standard Library Imports
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 # Third Party Imports
@@ -13,24 +13,17 @@ import numpy as np
 from .. import constants as CONST
 
 AD_OFFSET: float = 1721424.5
-"""Number of days from _noon_ of Janurary 1, 4713 BC to _midnight_ of January 1, 1 AD."""
+"""Number of days from _noon_ of January 1, 4713 BC to _midnight_ of January 1, 1 AD."""
 
 
 class TimeValue(ABC):
     """Abstract base class representing a quantity of time measured from a particular epoch."""
 
-    DEFAULT_EPOCH: float = 0.0
-    """The default instant in time that this :class:`.TimeValue` is measured from."""
-
-    def __init__(self, *args, **kwargs):
-        self._epoch = kwargs.pop("epoch", self.DEFAULT_EPOCH)
-        super().__init__()
-
     @property
     def epoch(self) -> float:
         """Instant in time this :class:`.TimeValue` is measured from.
 
-        Represented as the number of days (24 UT hour periods) since _noon_ of Janurary 1, 4713 BC.
+        Represented as the number of days (24 UT hour periods) since _noon_ of January 1, 4713 BC.
         """
         return self._epoch
 
@@ -46,7 +39,18 @@ class TimeValue(ABC):
 
 
 class DayFrac(float, TimeValue):
-    """Number of elapsed days since _noon_ of January 1, 4713 BC."""
+    """Number of elapsed days since specified epoch."""
+
+    DEFAULT_EPOCH: float = 0.0
+
+    def __init__(self, value, epoch: float = DEFAULT_EPOCH):
+        """Initialize a :class:`.DayFrac` instance.
+
+        Args:
+            value: Value used to create new ``float`` instance.
+            epoch: Instant in time this :class:`.DayFrac` instance is measured from.
+        """
+        self._epoch = epoch
 
     @property
     def sec_tol(self) -> float:
@@ -81,6 +85,25 @@ class DayFrac(float, TimeValue):
 
 class DatetimeExt(datetime, TimeValue):
     """Extended functionality encapsulated with a Python `datetime`."""
+
+    @classmethod
+    def copyDt(cls, dt: datetime) -> DatetimeExt:
+        """Instantiate a :class:`.DatetimeExt` instance from a ``datetime`` instance.
+
+        Args:
+            dt: ``datetime`` to make a copy from.
+        """
+        if dt.tzinfo is not None:
+            dt = dt.astimezone(timezone.utc)
+        return cls(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.microsecond)
+
+    @property
+    def epoch(self) -> float:
+        """Instant in time this :class:`.DatetimeExt` is measured from.
+
+        Represented as the number of days (24 UT hour periods) since _noon_ of January 1, 4713 BC.
+        """
+        return AD_OFFSET
 
     @property
     def sec_frac(self) -> float:

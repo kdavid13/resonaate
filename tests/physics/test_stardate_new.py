@@ -20,7 +20,7 @@ test_values = [
 @pytest.mark.parametrize(("test_dt", "test_jd"), test_values)
 def test_datetimeToDayFrac(test_dt: datetime, test_jd: float):
     """Verify that :meth:`.DatetimeExt.toDayFrac()` results in the expected value."""
-    jd_calc = DatetimeExt.combine(test_dt.date(), test_dt.time()).asDayFrac()
+    jd_calc = DatetimeExt.copyDt(test_dt).asDayFrac()
     assert jd_calc == test_jd
 
 @pytest.mark.parametrize(("test_dt", "test_jd"), test_values)
@@ -31,9 +31,21 @@ def test_dayFracToDatetime(test_dt: datetime, test_jd: float):
 
     assert abs((dt_calc - test_dt).total_seconds()) < jd_calc.sec_tol
 
-def test_epoch():
-    dt = DatetimeExt(1970, 1, 1, 12)
-    assert dt.epoch == 0.0
+def test_dayFracEpoch_default():
+    """Validate that :attr:`.epoch` property works for default :class:`.DayFrac`."""
+    jd = DayFrac(123)
+    assert jd == 123
+    print(jd + 321)
+    assert jd.epoch == 0.0
 
-    dt = DatetimeExt(1970, 1, 1, 12, epoch=123.456)
-    assert dt.epoch == 123.456
+def test_dayFracEpoch_custom():
+    """Validate that :attr:`.epoch` property works for custom :class:`.DayFrac`."""
+    jd = DayFrac(123, epoch=456.789)
+    assert jd == 123
+    print(jd + 321)
+    assert jd.epoch == 456.789
+
+def test_dtEpoch_default():
+    """Validate that :attr:`.epoch` property works for default :class:`.DatetimeExt`."""
+    dt = DatetimeExt(1970, 1, 1, 12)
+    assert dt.epoch
